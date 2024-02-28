@@ -15,6 +15,7 @@ let wallColour = "rgba(255, 255, 255, 255)";
 let emitter = {
     radius : 30,
     colour : "rgba(255, 255, 255, 100%)",
+    rayColour : "rgba(255, 255, 255, 50%)",
     rays : 200,
     raySeparationAngle : 0,
     rayLength : 100,
@@ -38,15 +39,18 @@ for(var i = 0; i < wallCount; i++){
 
 function drawBackground(){
     //fill background with black
+    ctx.beginPath()
     ctx.fillStyle = 'black';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     //fill border and walls
+    ctx.beginPath()
     ctx.strokeStyle = wallColour;
     ctx.lineWidth = 1;
     ctx.strokeRect(0, 0, width, height);
     
     for(var i = 0; i < wallsStart.length; i++){
+        ctx.beginPath();
         ctx.moveTo(wallsStart[i][0], wallsStart[i][1])
         ctx.lineTo(wallsEnd[i][0], wallsEnd[i][1])
         ctx.stroke();
@@ -111,7 +115,7 @@ function draw(){
         // 2. for loop through the arrays of the lines for each ray and check whether ray touches any line
         // 3. set end point for ray at point of intersection
         ctx.beginPath();
-        ctx.strokeStyle = emitter.colour;
+        ctx.strokeStyle = emitter.rayColour;
         let rayEnd = {
             x: circCenter.x,
             y: circCenter.y
