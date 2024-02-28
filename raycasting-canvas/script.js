@@ -2,28 +2,39 @@
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d", { willReadFrequently : true});
 
-const width = 900;
-const height = 900;
+// const width = 900;
+// const height = 900;
 
+const width = window.innerWidth;
+const height = window.innerHeight;
+
+const wallCount = 10;
 const elementColour = 'white';
-let wallColour = "rgba(112, 128, 144, 255)";
+let wallColour = "rgba(255, 255, 255, 255)";
 
 let emitter = {
     radius : 30,
-    colour : 'white',
-    rays : 10,
+    colour : "rgba(255, 255, 255, 100%)",
+    rays : 200,
     raySeparationAngle : 0,
     rayLength : 100,
     rayWidth : 1,
-    test: this.rays
 }
 
-emitter.raySeparationAngle = Math.PI * 2/ emitter.rays
-console.log(emitter.raySeparationAngle)
+emitter.raySeparationAngle = Math.PI * 2 / emitter.rays
+console.log(emitter.raySeparationAngle, 'radians')
 
 ctx.canvas.width = width;
 ctx.canvas.height = height;
 
+
+let wallsStart = [];
+let wallsEnd = [];
+
+for(var i = 0; i < wallCount; i++){
+    wallsStart.push([Math.floor(Math.random()*width), Math.floor(Math.random()*height)])
+    wallsEnd.push([Math.floor(Math.random()*width), Math.floor(Math.random()*height)])
+}
 
 function drawBackground(){
     //fill background with black
@@ -32,12 +43,14 @@ function drawBackground(){
 
     //fill border and walls
     ctx.strokeStyle = wallColour;
-    ctx.lineWidth = 15;
+    ctx.lineWidth = 1;
     ctx.strokeRect(0, 0, width, height);
     
-    ctx.fillStyle = wallColour;
-    ctx.fillRect(width - width / 3, height / 4 * 3, 30, height / 4)
-    ctx.fillRect(0, height / 3, width / 5, height / 4)
+    for(var i = 0; i < wallsStart.length; i++){
+        ctx.moveTo(wallsStart[i][0], wallsStart[i][1])
+        ctx.lineTo(wallsEnd[i][0], wallsEnd[i][1])
+        ctx.stroke();
+    }
 }
 
 // code for capturing mouse position
@@ -55,9 +68,27 @@ let mousePos = {x: 100, y: 100}
 canvas.addEventListener('mousemove', function(evt) {
     mousePos = getMousePos(canvas, evt);
     // console.log('Mouse position:', mousePos.x, mousePos.y);
-    // console.log('Colour (red channel): ', ctx.getImageData(mousePos.x, mousePos.y, mousePos.x, mousePos.y).data[0])
 }, false);
 
+function intersect(x1, y1, x2, y2, x3, y3, x4, y4) {
+    if((x1 === x2 && y1 === y2) || (x3 === x4 && y3 === y4)) {
+        return false
+    }
+    denominator = ((y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1))  
+    if(denominator === 0) {
+        return false
+    }
+
+        let ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denominator
+        let ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denominator
+    if(ua < 0 || ua > 1 || ub < 0 || ub > 1) {
+        return false
+    }  
+    let x = x1 + ua * (x2 - x1)
+    let y = y1 + ua * (y2 - y1)
+
+    return {x, y}
+}
 
 function draw(){
     drawBackground();
@@ -75,28 +106,27 @@ function draw(){
 
     
     for(var theta = 0; theta < emitter.rays; theta++){
+        // RAY CASTING STRUCTURED ENGLISH
+        // 1. cast rays to the edge of the canvas
+        // 2. for loop through the arrays of the lines for each ray and check whether ray touches any line
+        // 3. set end point for ray at point of intersection
         ctx.beginPath();
         ctx.strokeStyle = emitter.colour;
-        ctx.moveTo(circCenter.x, circCenter.y);
-
-        let wallTouched = false;
         let rayEnd = {
             x: circCenter.x,
             y: circCenter.y
-        }
-        while(!wallTouched){
-            let arr = ctx.getImageData(rayEnd.x, rayEnd.y, rayEnd.x, rayEnd.y).data
-            let pixelColour = `rgba(${arr[0]}, ${arr[1]}, ${arr[2]}, ${arr[3]})`
-            if(pixelColour == wallColour){
-                wallTouched = true;
-            } else {
-                rayEnd.x += Math.cos(theta * emitter.raySeparationAngle) * 5
-                rayEnd.y += Math.sin(theta * emitter.raySeparationAngle) * 5
+        };
+        ctx.moveTo(circCenter.x, circCenter.y);
+        rayEnd.x = circCenter.x + Math.cos(theta * emitter.raySeparationAngle) * width // cosine = adjacent/hypotenuse
+        rayEnd.y = circCenter.y + Math.sin(theta * emitter.raySeparationAngle) * height // sine = opposite/hypotenuse
+        for(var i = 0; i < wallsStart.length; i++){
+            intersection = intersect(circCenter.x, circCenter.y, rayEnd.x, rayEnd.y, wallsStart[i][0], wallsStart[i][1], wallsEnd[i][0], wallsEnd[i][1])
+            if(intersection){
+                rayEnd.x = intersection.x;
+                rayEnd.y = intersection.y;
             }
         }
-        // ctx.lineTo(circCenter.x + Math.cos(theta * emitter.raySeparationAngle) * emitter.rayLength, circCenter.y + Math.sin(theta * emitter.raySeparationAngle) * emitter.rayLength)
         ctx.lineTo(rayEnd.x, rayEnd.y)
-        console.log(rayEnd.x, rayEnd.y)
         ctx.lineWidth = emitter.rayWidth;
         ctx.stroke();
     }
