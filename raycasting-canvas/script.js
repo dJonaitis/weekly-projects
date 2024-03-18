@@ -15,11 +15,16 @@ let wallColour = "rgba(255, 255, 255, 255)";
 let emitter = {
     radius : 30,
     colour : "rgba(255, 255, 255, 100%)",
-    rayColour : "rgba(255, 255, 255, 50%)",
-    rays : 200,
+    rayColour : "rgba(255, 255, 255, 10%)",
+    rays : 2000,
     raySeparationAngle : 0,
     rayLength : 100,
     rayWidth : 1,
+}
+
+let person = {
+    size: 10,
+    colour : "rgba(255, 255, 255, 100%)"
 }
 
 emitter.raySeparationAngle = Math.PI * 2 / emitter.rays
@@ -31,10 +36,12 @@ ctx.canvas.height = height;
 
 let wallsStart = [];
 let wallsEnd = [];
+let people = [];
 
 for(var i = 0; i < wallCount; i++){
     wallsStart.push([Math.floor(Math.random()*width), Math.floor(Math.random()*height)])
     wallsEnd.push([Math.floor(Math.random()*width), Math.floor(Math.random()*height)])
+    people.push([Math.floor(Math.random()*width), Math.floor(Math.random()*height)])
 }
 
 function drawBackground(){
@@ -124,10 +131,22 @@ function draw(){
         rayEnd.x = circCenter.x + Math.cos(theta * emitter.raySeparationAngle) * width // cosine = adjacent/hypotenuse
         rayEnd.y = circCenter.y + Math.sin(theta * emitter.raySeparationAngle) * height // sine = opposite/hypotenuse
         for(var i = 0; i < wallsStart.length; i++){
-            intersection = intersect(circCenter.x, circCenter.y, rayEnd.x, rayEnd.y, wallsStart[i][0], wallsStart[i][1], wallsEnd[i][0], wallsEnd[i][1])
+            let intersection = intersect(circCenter.x, circCenter.y, rayEnd.x, rayEnd.y, wallsStart[i][0], wallsStart[i][1], wallsEnd[i][0], wallsEnd[i][1])
             if(intersection){
                 rayEnd.x = intersection.x;
                 rayEnd.y = intersection.y;
+            }
+        }
+        for(var i = 0; i < people.length; i++){
+            let intersection = intersect(circCenter.x, circCenter.y, rayEnd.x, rayEnd.y, people[i][0], people[i][1], people[i][0] + person.size, people[i][1] + person.size) 
+            if(intersection){
+                ctx.beginPath();
+                ctx.fillStyle = person.colour;
+                // let gradient = ctx.createLinearGradient(intersection.x, intersection.y, intersection.x + 5, intersection.y + 5)
+                // gradient.addColorStop(0, person.colour);
+                // gradient.addColorStop(1, 'black')
+                // ctx.fillStyle = gradient;
+                ctx.fillRect(people[i][0], people[i][1], person.size, person.size)
             }
         }
         ctx.lineTo(rayEnd.x, rayEnd.y)
